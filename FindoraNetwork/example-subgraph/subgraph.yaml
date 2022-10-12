@@ -1,0 +1,28 @@
+specVersion: 0.0.4
+description: Findora NFTs
+repository: https://github.com/FindoraNetwork/findora-graph/tree/mainnet/FindoraNetwork/example-subgraph
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    # Please use your directory name here:
+    name: FindoraNetwork/example-subgraph
+    network: mainnet
+    source:
+      abi: FRC721
+      startBlock: 2480000
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings.ts
+      entities:
+        - Account
+        - NFT
+        - NFTContract
+      abis:
+        - name: FRC721
+          file: ./abis/EIP721.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleFRC721Transfer

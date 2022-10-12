@@ -1,0 +1,23 @@
+type Account @entity {
+  id: Bytes! # {address}
+  nfts: [NFT!] @derivedFrom(field: "owner")
+}
+
+type NFT @entity {
+  id: ID! # {contract::id}_{tokenId}
+
+  contract: NFTContract!
+  tokenId: BigInt!
+
+  owner: Account
+  uri: String
+}
+
+type NFTContract @entity {
+  id: Bytes! # {address}
+
+  name: String
+  symbol: String
+
+  tokens: [NFT!] @derivedFrom(field: "contract")
+}
