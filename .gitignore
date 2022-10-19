@@ -7,3 +7,4 @@ node_modules/
 # Build files
 build/
 generated/
+!generated/volumes/.gitkeep
