@@ -1,0 +1,361 @@
+# # # # # # # # # # # # # # # # # # # # # # # #
+# Major entities:
+#   > Account
+#   > NFT
+#   > Category
+#   ----------
+#   > Activity
+#   > Listing
+#   > Bid
+#   > Sale
+#   > NFTContract
+#   > Currency
+#
+# Compution & Relation entities:
+#   > AnalyticDailyMarket
+#   > AnalyticDailyCollection
+#   x _Schema_
+#   ----------
+#   > AccountNFT
+#   > AccountCashflow
+#   > NFTContractCategory
+#
+# Enums:
+#   > NFTStandard
+#   > ListingStatus
+#   > SaleType
+#   > BidStatus
+#   > ActivityType
+#
+# # # # # # # # # # # # # # # # # # # # # # # #
+
+
+#### MAJOR ENTITIES ####
+
+# ╔═╗┌─┐┌─┐┌─┐┬ ┬┌┐┌┌┬┐
+# ╠═╣│  │  │ ││ ││││ │
+# ╩ ╩└─┘└─┘└─┘└─┘┘└┘ ┴  >>> 帳戶資訊
+type Account @entity {
+  id: Bytes! # {address}
+  nfts: [AccountNFT!] @derivedFrom(field: "account")
+
+  listings: [Listing!] @derivedFrom(field: "owner")
+  bids: [Bid!] @derivedFrom(field: "bidder")
+
+  bought: [Sale!] @derivedFrom(field: "buyer")
+  sold: [Sale!] @derivedFrom(field: "seller")
+  cashflow: [AccountCashflow!] @derivedFrom(field: "account")
+
+  display: String
+}
+
+# ╔╗╔╔═╗╔╦╗
+# ║║║╠╣  ║
+# ╝╚╝╚   ╩  >>> $$$
+type NFT @entity {
+  id: ID! # {contract::id}_{tokenId}
+  contract: NFTContract!
+  tokenId: BigInt!
+
+  holders: [AccountNFT!]! @derivedFrom(field: "nft")
+  listings: [Listing!] @derivedFrom(field: "nft") # History of all listings.
+  bids: [Bid!] @derivedFrom(field: "nft") # History of all bids.
+  sales: [Sale!] @derivedFrom(field: "nft") # History of all sales.
+  activities: [Activity!]! @derivedFrom(field: "nft") # History of all activity.
+
+  uri: String
+  "ERC721: 0 or 1; ERC1155: sum of all token holding amounts"
+  total: BigInt!
+
+  "Token minting"
+  createdAt: BigInt!
+  updatedAt: BigInt!
+
+  activeListings: [Listing!]!
+
+  # statistics -----
+
+  saleCounts: Int!
+  saleAmounts: BigInt!
+  volume: BigInt!
+  fees: BigInt!
+  royalties: BigInt!
+
+  floorPrice: BigInt
+  priceCeiling: BigInt
+  avgPrice: BigInt
+
+  # searches -----
+
+  searchKeywords: String # {contract::name}__{contract::symbol}__{contract::address}__{uri}
+}
+
+# ╔═╗┌─┐┌┬┐┌─┐┌─┐┌─┐┬─┐┬ ┬
+# ║  ├─┤ │ ├┤ │ ┬│ │├┬┘└┬┘
+# ╚═╝┴ ┴ ┴ └─┘└─┘└─┘┴└─ ┴  >>> NFT 分類
+type Category @entity {
+  id: ID! # art / domain-names / vitual-worlds / ...
+  collections: [NFTContractCategory!] @derivedFrom(field: "tag")
+
+  text: String!
+  level: Int!
+}
+
+# ╔═╗┌─┐┌┬┐┬┬  ┬┬┌┬┐┬ ┬
+# ╠═╣│   │ │└┐┌┘│ │ └┬┘
+# ╩ ╩└─┘ ┴ ┴ └┘ ┴ ┴  ┴  >>> NFT 日誌
+type Activity @entity {
+  id: Bytes! # {nft::id}_{ActivityType}_{timestamp}_{##}
+  nft: NFT!
+  type: ActivityType!
+  timestamp: Int!
+
+  from: String
+  to: String
+  currency: String
+  price: BigInt
+}
+
+# ╦  ┬┌─┐┌┬┐┬┌┐┌┌─┐
+# ║  │└─┐ │ │││││ ┬
+# ╩═╝┴└─┘ ┴ ┴┘└┘└─┘ >>> 上架資訊
+type Listing @entity {
+  id: Bytes! # ERC721: {nft::id}_{tx} ERC1155: {nft::contract}_{orderId}
+  owner: Account!
+  collection: NFTContract!
+  nft: NFT!
+  amount: BigInt!
+  status: ListingStatus!
+  type: ListingType!
+
+  currency: Currency!
+  price: BigInt!
+
+  bids: [Bid!] @derivedFrom(field: "target")
+  orderId: BigInt # Only for 1155 tokens
+
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+# ╔╗ ┬┌┬┐
+# ╠╩╗│ ││
+# ╚═╝┴─┴┘ >>> 出價紀錄
+type Bid @entity {
+  id: Bytes! #{nft::contract}_{bidder}_{tx}
+  status: BidStatus!
+
+  target: Listing # Could be missing if we lost the listing
+  nft: NFT!
+  amount: BigInt!
+
+  bidder: Account!
+  seller: Account # Could be missing if we lost the listing
+
+  currency: Currency!
+  price: BigInt!
+  avgPrice: BigInt!
+
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+# ╔═╗┌─┐┬  ┌─┐
+# ╚═╗├─┤│  ├┤
+# ╚═╝┴ ┴┴─┘└─┘ >>> 銷售紀錄
+type Sale @entity(immutable: true) {
+  id: Bytes! # {nft::address}_{buyer}_{tx}
+  type: SaleType!
+  nft: NFT!
+  amount: BigInt!
+
+  buyer: Account!
+  seller: Account!
+
+  currency: Currency!
+  price: BigInt!
+
+  timestamp: BigInt!
+  txHash: Bytes!
+}
+
+# ╔╗╔╔═╗╔╦╗  ╔═╗┌─┐┌┐┌┌┬┐┬─┐┌─┐┌─┐┌┬┐
+# ║║║╠╣  ║   ║  │ ││││ │ ├┬┘├─┤│   │
+# ╝╚╝╚   ╩   ╚═╝└─┘┘└┘ ┴ ┴└─┴ ┴└─┘ ┴  >>> 智能合約資訊 (Collection)
+type NFTContract @entity {
+  id: Bytes! # Contract address
+  address: String!
+  standard: NFTStandard!
+
+  name: String
+  symbol: String
+
+  creator: Account
+  uri: String
+
+  nfts: [NFT!] @derivedFrom(field: "contract")
+  listings: [Listing!] @derivedFrom(field: "collection")
+  categories: [NFTContractCategory!] @derivedFrom(field: "contract")
+
+  listingCounts: BigInt!
+  nftCounts: BigInt!
+
+  # statistics -----
+
+  dailyAnalystic: [AnalyticDailyCollection!] @derivedFrom(field: "collection")
+
+  saleCounts: Int!
+  saleAmounts: BigInt!
+  volume: BigInt!
+  fees: BigInt!
+  royalties: BigInt!
+
+  floorPrice: BigInt
+  priceCeiling: BigInt
+  avgPrice: BigInt
+}
+
+# ╔═╗┬ ┬┬─┐┬─┐┌─┐┌┐┌┌─┐┬ ┬
+# ║  │ │├┬┘├┬┘├┤ ││││  └┬┘
+# ╚═╝└─┘┴└─┴└─└─┘┘└┘└─┘ ┴  >>> 計價用貨幣 (ERC20 / FRC20)
+type Currency @entity(immutable: true) {
+  id: Bytes! # Contract address
+  address: String!
+
+  name: String
+  symbol: String
+  decimals: Int
+}
+
+#### Compution entities ####
+
+
+# ╔═╗┌┐┌┌─┐┬ ┬ ┬┌┬┐┬┌─┐
+# ╠═╣│││├─┤│ └┬┘ │ ││
+# ╩ ╩┘└┘┴ ┴┴─┘┴  ┴ ┴└─┘
+# ╔╦╗┌─┐┬┬ ┬ ┬  ╔╦╗┌─┐┬─┐┬┌─┌─┐┌┬┐
+#  ║║├─┤││ └┬┘  ║║║├─┤├┬┘├┴┐├┤  │
+# ═╩╝┴ ┴┴┴─┘┴   ╩ ╩┴ ┴┴└─┴ ┴└─┘ ┴  >>> 市場總體每日統計資料
+type AnalyticDailyMarket @entity {
+  id: ID! # {date::timestamp}
+  date: Int! # unix timestamp
+
+  listings: Int!
+  sales: Int!
+  volume: BigInt!
+
+  fees: BigInt!
+  royalties: BigInt!
+}
+
+# ╔═╗┌┐┌┌─┐┬ ┬ ┬┌┬┐┬┌─┐
+# ╠═╣│││├─┤│ └┬┘ │ ││
+# ╩ ╩┘└┘┴ ┴┴─┘┴  ┴ ┴└─┘
+# ╔╦╗┌─┐┬┬ ┬ ┬  ╔═╗┌─┐┬  ┬  ┌─┐┌─┐┌┬┐┬┌─┐┌┐┌
+#  ║║├─┤││ └┬┘  ║  │ ││  │  ├┤ │   │ ││ ││││
+# ═╩╝┴ ┴┴┴─┘┴   ╚═╝└─┘┴─┘┴─┘└─┘└─┘ ┴ ┴└─┘┘└┘ >>> Collection 每日統計資料
+type AnalyticDailyCollection @entity {
+  id: ID! # {nft::address}_{date::timestamp}
+  date: Int!
+
+  collection: NFTContract!
+  listings: Int!
+  saleCounts: Int!
+  saleAmounts: BigInt!
+  volume: BigInt!
+
+  fees: BigInt!
+  royalties: BigInt!
+
+  floorPrice: BigInt
+  avgPrice: BigInt
+  priceCeiling: BigInt
+}
+
+
+#### Relation entities ####
+
+
+# Account --- AccountNFT --- NFT
+type AccountNFT @entity {
+  id: Bytes! # {account::id}_{nft::id}
+  account: Account!
+  nft: NFT!
+  amount: BigInt!
+}
+
+# Account --- AccountCashflow --- Currency
+type AccountCashflow @entity {
+  id: Bytes! # {account::id}_{currency::id}
+  currency: Currency!
+  account: Account!
+
+  spent: BigInt!
+  "Earned from selling NFTs"
+  earned: BigInt!
+  "Income from royalty/fee"
+  income: BigInt!
+}
+
+# NFTContract --- NFTContractCategory --- Category
+type NFTContractCategory @entity {
+  id: Bytes! # {nft::address}_{category::id}
+  tag: Category!
+  contract: NFTContract!
+}
+
+
+#### Enums ####
+
+
+enum NFTStandard @entity {
+  "Non-Fungible Token Standard"
+  ERC721
+  "Multi Token Standard"
+  ERC1155
+}
+
+enum ListingStatus @entity {
+  open
+  cancelled
+  sold
+}
+
+enum ListingType @entity {
+  All
+  BidOnly
+}
+
+enum SaleType @entity {
+  "Win the bid, 得標"
+  bid
+  "Direct purchase, 直購"
+  purchase
+}
+
+enum BidStatus @entity {
+  open
+  cancelled
+  terminated
+  accepted
+}
+
+enum ActivityType @entity {
+  mint
+  transfer
+  burn
+
+  listing
+  updateListing
+  cancelListing
+
+  offer
+  updateOffer
+  cancelOffer
+
+  collectionOffers
+  updateCollectionOffers
+  cancelCollectionOffers
+
+  sale
+}
