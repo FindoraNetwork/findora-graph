@@ -10,7 +10,7 @@ dataSources:
     network: mainnet
     source:
       abi: FRC721
-      startBlock: 450000
+      startBlock: 2480000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
