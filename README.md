@@ -1,116 +1,117 @@
-# Findora Graph
+# The Graph
+The Graph is an indexing protocol for organizing blockchain data and making it easily accessible with GraphQL.
+  
+## Findora Graph
 
-Findora Network has hosted a Graph Node server to empower developers building excellent dApps on the Findora chain. You can submit a PR to [deploy](#deploy-a-new-subgraph) and [update](#update-subgraphs) your own subgraphs here.
+Findora Network has hosted a Graph Node server to empower developers to build dApps on the Findora chain. Subgraphs can be deployed and updated using a pull request for this repo (see below for instructions).
 
-Graph Node is an open source Rust implementation that event sources the blockchain to deterministically update a data store that can be queried via the GraphQL endpoint.
+Graph Node is an opensource Rust implementation that indexes the blockchain to deterministically update a data store that can be queried via the GraphQL endpoint.
 
-For detailed instructions and more context, check out the [Graph Node Getting Started Guide](https://github.com/graphprotocol/graph-node/blob/master/docs/getting-started.md).
+Check out the Graph Node [Getting Started Guide](https://github.com/graphprotocol/graph-node/blob/master/docs/getting-started.md) for detailed instructions and more context.
 
-## Submit your subgraphs
+### How to create and test your subgraph locally
 
-> ....(add some rules here)
+This example will walk you through the steps to create a new subgraph and test it on a local node on your machine.
 
-### Deploy a new subgraph
+#### Generate a subgraph
 
-> ....(short descriptions)
+1- Clone this repo.
 
-- Fork this repository
+2- Generate base types from your `schema.graphql` settings.
 
-- Copy example directory and rename the root directory to be the same as PR submitter's account.
+```bash
+# graph codegen FindoraNetwork/example-subgraph/subgraph.yaml
+$ yarn gen FindoraNetwork/example-subgraph/subgraph.yaml
+# ...
+# ...
+# ✔ Generate types for GraphQL schema
+#
+# Types generated successfully
+```
 
-  ```bash
-  $ cp -r FindoraNetwork <github-handle> && cd $_
+3- Edit event mappings, such as `src/handleFRC721Transfer.ts` in the example directory.
 
-  ## Edit `authors.json`
-  #
-  #  Those PRs edit the directory contents but not in the author's list (authors.json) wouldn't be accepted!
+4- After editing, compile them to web assembly files:
 
-  $ mv example-subgraph <subgraph-name> && cd $_
+```bash
+# graph build FindoraNetwork/example-subgraph/subgraph.yaml
+$ yarn build FindoraNetwork/example-subgraph/subgraph.yaml
+# ...
+# ✔ Write compiled subgraph to build/
+#
+# Build completed: .../FindoraNetwork/findora-graph/build/subgraph.yaml
+```
 
-  ## Edit subgraph settings in `subgraph.yaml`
-  #
-  #  * dataSources.name must rename to your directory name to avoid naming collision
+#### Run a local graph-node, to deploy and test your subgraph:
 
-  ## Edit your graph relations in `schema.graphql` and mapping scripts.
-  ```
+1- Install [Docker](https://www.docker.com/) on your machine.
 
-- Submit your pull request, follow the instructions inside to edit your PR.
+2- Start graph-node:
 
-### Update subgraphs
+```bash
+# In the project root:
+$ docker-compose up
+# Starting findora-graph_ipfs_1       ... done
+# Recreating findora-graph_postgres_1 ... done
+# Recreating findora-graph_graph-node_1 ... done
+# ...
+```
 
-> ....(short descriptions)
+3- Create a new subgraph edge:
 
-- Edit your subgraphs.
+```bash
+# graph create --node http://127.0.0.1:8020 findora/example
+$ yarn create:local findora/example
+```
 
-  > **Note**
-  >
-  > PR may only modify files in one directory at a time.
+4-  Deploy your subgraph:
 
-- Submit your pull request.
+```bash
+# graph deploy                                    \
+#    --product hosted-service                     \
+#    --node http://127.0.0.1:8020                 \
+#    --ipfs http://127.0.0.1:5001                 \
+#    findora/example                              \
+#    FindoraNetwork/example-subgraph/subgraph.yaml
+$ yarn deploy:local findora/example FindoraNetwork/example-subgraph/subgraph.yaml
+# ? Version Label (e.g. v0.0.1) ›
+# ...
+```
 
-## How to
+5- Browse [http://127.0.0.1:8000/subgraphs/name/findora/example/graphql](http://127.0.0.1:8000/subgraphs/name/findora/example/graphql) to explore.
 
-- Develop a subgraph:
+### Submit and deploy your subgraph
 
-  1 Generate base types from your `schema.graphql` settings.
+When you've tested your subgraph locally, you can now submit it to be deployed on the Findora mainnet node. This is done by submitting a pull request.
 
-    ```bash
-    # graph codegen FindoraNetwork/example-subgraph/subgraph.yaml
-    $ yarn gen FindoraNetwork/example-subgraph/subgraph.yaml
-    # ...
-    # ...
-    # ✔ Generate types for GraphQL schema
-    #
-    # Types generated successfully
-    ```
+#### Deploy a new subgraph
 
-  2 Editing event mappings, such as `src/handleFRC721Transfer.ts` in the example directory.
+1- Fork this repo.
 
-  3 After editing, compile them to web assembly files:
+2- Copy the `FindoraNetwork/` directory and rename the root directory to be the same as your github handle.
 
-    ```bash
-    # graph build FindoraNetwork/example-subgraph/subgraph.yaml
-    $ yarn build FindoraNetwork/example-subgraph/subgraph.yaml
-    # ...
-    # ✔ Write compiled subgraph to build/
-    #
-    # Build completed: .../FindoraNetwork/findora-graph/build/subgraph.yaml
-    ```
+```bash
+$ cp -r FindoraNetwork <github-handle> && cd $_
 
-- Run a local graph-node, to deploy and test your subgraph:
+## Edit `authors.json`
+#
+#  Those PRs edit the directory contents but not in the author's list (authors.json) wouldn't be accepted!
 
-  1 Install Docker in your machine.
+$ mv example-subgraph <subgraph-name> && cd $_
 
-  2 Start graph-node:
+## Edit subgraph settings in `subgraph.yaml`
+#
+#  * dataSources.name must rename to your directory name to avoid naming collision
 
-    ```bash
-    # In the project root:
-    $ docker-compose up
-    # Starting findora-graph_ipfs_1       ... done
-    # Recreating findora-graph_postgres_1 ... done
-    # Recreating findora-graph_graph-node_1 ... done
-    # ...
-    ```
+## Edit your graph relations in `schema.graphql` and mapping scripts.
+```
 
-  3 Create a new subgraph edge:
+3- Create a pull request and follow the template instructions before submitting your PR.
 
-    ```bash
-    # graph create --node http://127.0.0.1:8020 findora/example
-    $ yarn create:local findora/example
-    ```
+4- Your subgraph will be deployed upon review.
 
-  4 Deploy your subgraph:
+#### Update subgraphs
 
-    ```bash
-    # graph deploy                                    \
-    #    --product hosted-service                     \
-    #    --node http://127.0.0.1:8020                 \
-    #    --ipfs http://127.0.0.1:5001                 \
-    #    findora/example                              \
-    #    FindoraNetwork/example-subgraph/subgraph.yaml
-    $ yarn deploy:local findora/example FindoraNetwork/example-subgraph/subgraph.yaml
-    # ? Version Label (e.g. v0.0.1) ›
-    # ...
-    ```
+To update an existing subgraph, you may simply create another PR with you modifications.
 
-  5 Browse http://127.0.0.1:8000/subgraphs/name/findora/example/graphql to explore your results.
+**NOTE: PRs may only modify one directory at a time.**
