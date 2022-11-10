@@ -108,7 +108,9 @@ $ mv example-subgraph <subgraph-name> && cd $_
 
 3- Create a pull request and follow the template instructions before submitting your PR.
 
-4- Your subgraph will be deployed upon review.
+4- Your subgraph will be deployed upon review and made available at `https://graph.findora.org/subgraphs/name/<github-handle>/<your-subgraph>/graphql`
+
+e.g. [https://graph.findora.org/subgraphs/name/FindoraNetwork/example-subgraph/graphql](https://graph.findora.org/subgraphs/name/FindoraNetwork/example-subgraph/graphql)
 
 #### Update subgraphs
 
