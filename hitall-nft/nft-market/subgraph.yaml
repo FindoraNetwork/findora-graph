@@ -1,0 +1,193 @@
+specVersion: 0.0.4
+description: Hitall NFT Market on Findora
+repository: https://github.com/hitall-nft/nft-subgraph
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: hitall-nft/NFT
+    network: mainnet
+    source:
+      abi: MergedNFT
+      startBlock: 2480000
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings.ts
+      entities:
+        - Account
+        - AccountNFT
+        - Activity
+        - ActivityType
+        - NFT
+        - NFTContract
+        - NFTStandard
+      abis:
+        - name: MergedNFT
+          file: ./abis/MergedNFT.json
+        - name: ERC721
+          file: ./abis/ERC721.json
+        - name: ERC1155
+          file: ./abis/ERC1155.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleERC721Transfer
+        - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleERC1155SingleTransfer
+        - event: TransferBatch(indexed address,indexed address,indexed address,uint256[],uint256[])
+          handler: handleERC1155BatchTransfer
+  - kind: ethereum/contract
+    name: hitall-nft/Market721
+    network: mainnet
+    source:
+      abi: ExchangeNFT721s
+      address: "0xf250F9c6409eDFc30d65E525f35D1EaA6816c87A"
+      startBlock: 2487200
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings.ts
+      entities:
+        - Account
+        - AccountCashflow
+        - AccountNFT
+        - Activity
+        - ActivityType
+        - AnalyticDailyCollection
+        - AnalyticDailyMarket
+        - Bid
+        - BidStatus
+        - Category
+        - Currency
+        - Listing
+        - ListingStatus
+        - ListingType
+        - NFT
+        - NFTContract
+        - NFTContractCategory
+        - NFTStandard
+        - Sale
+        - SaleType
+      abis:
+        - name: ExchangeNFT721s
+          file: ./abis/ExchangeNFT721s.json
+        - name: ERC721
+          file: ./abis/ERC721.json
+        - name: Oracle
+          file: ./abis/Oracle.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Ask(indexed address,indexed address,address,indexed uint256,uint256,uint256)
+          handler: handle721Listing
+        - event: Trade(indexed address,indexed address,address,address,indexed uint256,uint256,uint256,uint256,uint256)
+          handler: handle721Trade
+        - event: CancelSellToken(indexed address,indexed address,address,indexed uint256,uint256)
+          handler: handle721CancelListing
+        - event: Bid(indexed address,indexed address,address,indexed uint256,uint256)
+          handler: handle721Bid
+        - event: CancelBidToken(indexed address,indexed address,address,indexed uint256,uint256)
+          handler: handle721CancelBid
+  - kind: ethereum/contract
+    name: hitall-nft/Market1155
+    network: mainnet
+    source:
+      abi: ExchangeNFT1155s
+      address: "0x862af301C31524C0C63C7dA91DF6d89270530A4A"
+      startBlock: 2500000
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings.ts
+      entities:
+        - Account
+        - AccountCashflow
+        - AccountNFT
+        - Activity
+        - ActivityType
+        - AnalyticDailyCollection
+        - AnalyticDailyMarket
+        - Bid
+        - BidStatus
+        - Category
+        - Currency
+        - Listing
+        - ListingStatus
+        - NFT
+        - NFTCategory
+        - NFTContract
+        - NFTStandard
+        - Sale
+        - SaleType
+      abis:
+        - name: ExchangeNFT1155s
+          file: ./abis/ExchangeNFT1155s.json
+        - name: ERC1155
+          file: ./abis/ERC1155.json
+        - name: Oracle
+          file: ./abis/Oracle.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Ask(indexed address,indexed address,indexed uint256,address,uint256,uint256,uint256,uint256)
+          handler: handle1155Listing
+        - event: Trade(indexed address,indexed address,indexed uint256,address,address,uint256,uint256,uint256,uint256,uint256,uint256)
+          handler: handle1155Trade
+        - event: CancelSellToken(indexed address,indexed address,indexed uint256,address,uint256,uint256,uint256)
+          handler: handle1155CancelListing
+        - event: Bid(indexed address,indexed address,indexed uint256,address,uint256)
+          handler: handle1155Bid
+        - event: CancelBidToken(indexed address,indexed address,indexed uint256,address,uint256)
+          handler: handle1155CancelBid
+  - kind: ethereum/contract
+    name: hitall-nft/CMS
+    network: mainnet
+    source:
+      abi: MarketManagement
+      startBlock: 2527600
+      address: "0xcF0E8B9dab9944700F27359c46390280a5223d6c"
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings.ts
+      entities:
+        - Account
+        - Category
+        - NFTContract
+        - NFTContractCategory
+        - NFT
+        - Activity
+        - Listing
+        - Bid
+        - Sale
+        - Currency
+        - AnalyticDailyMarket
+        - AnalyticDailyCollection
+        - AccountNFT
+        - AccountCashflow
+        - NFTStandard
+        - ListingStatus
+        - ListingType
+        - SaleType
+        - BidStatus
+        - ActivityType
+      abis:
+        - name: MergedNFT
+          file: ./abis/MergedNFT.json
+        - name: MarketManagement
+          file: ./abis/MarketManagement.json
+      eventHandlers:
+        - event: TagLevel(string,uint8)
+          handler: handleTagLevel
+        - event: AttachTag(indexed address,string)
+          handler: handleAttachTag
+        - event: DetachTag(indexed address,string)
+          handler: handleDetachTag
+        - event: CollectionOwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnerTransfer
+        - event: UpdateDisplayName(indexed address,string)
+          handler: handleNameUpdate
