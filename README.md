@@ -5,7 +5,7 @@ The Graph is an indexing protocol for organizing blockchain data and making it e
 
 Findora Network has hosted a Graph Node server to empower developers to build dApps on the Findora chain. Subgraphs can be deployed and updated using a pull request for this repo (see below for instructions).
 
-Graph Node is an opensource Rust implementation that indexes the blockchain to deterministically update a data store that can be queried via the GraphQL endpoint.
+Graph node is an opensource Rust implementation that indexes the blockchain to deterministically update a data store that can be queried via the GraphQL endpoint.
 
 Check out the Graph Node [Getting Started Guide](https://github.com/graphprotocol/graph-node/blob/master/docs/getting-started.md) for detailed instructions and more context.
 
@@ -42,7 +42,7 @@ $ yarn build FindoraNetwork/example-subgraph/subgraph.yaml
 # Build completed: .../FindoraNetwork/findora-graph/build/subgraph.yaml
 ```
 
-#### Run a local graph-node, to deploy and test your subgraph:
+#### Run a local graph-node to deploy and test your subgraph:
 
 1- Install [Docker](https://www.docker.com/) on your machine.
 
